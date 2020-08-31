@@ -1,10 +1,8 @@
 package teapack
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
-	"io"
 
 	"github.com/vmihailenco/msgpack"
 )
@@ -70,6 +68,8 @@ type PacketRequest struct {
 	Context interface{}
 	// Data 是主要資料。
 	Data interface{}
+
+	binary []byte
 }
 
 // Marshal 能夠將封包編譯成位元組資料。
@@ -106,43 +106,19 @@ func (p *PacketRequest) marshal() (b []byte, err error) {
 }
 
 func (p *PacketRequest) load(b []byte) (err error) {
+	p.binary = b
 	//
-	b = b[1:]
-	buf := bytes.NewBuffer(b)
+	//b = b[1:]
 	//
-	id := make([]byte, 2)
-	n, err := buf.Read(id)
-	read := n
-	if err != nil {
-		return err
-	}
+	id := b[1:3]
 	//
-	ctxLen := make([]byte, 2)
-	n, err = buf.Read(ctxLen)
-	read += n
-	if err != nil {
-		return err
-	}
+	ctxLen := b[3:5]
 	//
-	method := make([]byte, 1)
-	n, err = buf.Read(method)
-	read += n
-	if err != nil {
-		return err
-	}
+	method := b[5:6]
 	//
-	ctx := make([]byte, binary.LittleEndian.Uint16(ctxLen))
-	n, err = buf.Read(ctx)
-	read += n
-	if err != nil {
-		return err
-	}
+	ctx := b[6 : 6+binary.LittleEndian.Uint16(ctxLen)]
 	//
-	data := make([]byte, len(b)-read)
-	_, err = buf.Read(data)
-	if err != nil && err != io.EOF {
-		return err
-	}
+	data := b[6+binary.LittleEndian.Uint16(ctxLen):]
 	//
 	p.ID = binary.LittleEndian.Uint16(id)
 	p.Method = uint8(method[0])
@@ -175,6 +151,8 @@ type PacketResponse struct {
 	Context interface{}
 	// Data 是主要資料。
 	Data interface{}
+
+	binary []byte
 }
 
 // Marshal 能夠將封包編譯成位元組資料。
@@ -211,43 +189,17 @@ func (p *PacketResponse) marshal() (b []byte, err error) {
 }
 
 func (p *PacketResponse) load(b []byte) (err error) {
+	p.binary = b
 	//
-	b = b[1:]
-	buf := bytes.NewBuffer(b)
+	id := b[1:3]
 	//
-	id := make([]byte, 2)
-	n, err := buf.Read(id)
-	read := n
-	if err != nil {
-		return err
-	}
+	ctxLen := b[3:5]
 	//
-	ctxLen := make([]byte, 2)
-	n, err = buf.Read(ctxLen)
-	read += n
-	if err != nil {
-		return err
-	}
+	status := b[5:6]
 	//
-	status := make([]byte, 1)
-	n, err = buf.Read(status)
-	read += n
-	if err != nil {
-		return err
-	}
+	ctx := b[6 : 6+binary.LittleEndian.Uint16(ctxLen)]
 	//
-	ctx := make([]byte, binary.LittleEndian.Uint16(ctxLen))
-	n, err = buf.Read(ctx)
-	read += n
-	if err != nil {
-		return err
-	}
-	//
-	data := make([]byte, len(b)-read)
-	_, err = buf.Read(data)
-	if err != nil && err != io.EOF {
-		return err
-	}
+	data := b[6+binary.LittleEndian.Uint16(ctxLen):]
 	//
 	p.ID = binary.LittleEndian.Uint16(id)
 	p.StatusCode = StatusCode(status[0])
@@ -278,6 +230,8 @@ type PacketEvent struct {
 	Context interface{}
 	// Data 是主要資料。
 	Data interface{}
+
+	binary []byte
 }
 
 // Marshal 能夠將封包編譯成位元組資料。
@@ -310,36 +264,17 @@ func (p *PacketEvent) marshal() (b []byte, err error) {
 }
 
 func (p *PacketEvent) load(b []byte) (err error) {
+	p.binary = b
+
 	//
-	b = b[1:]
-	buf := bytes.NewBuffer(b)
+	method := b[1:2]
 	//
-	method := make([]byte, 1)
-	n, err := buf.Read(method)
-	read := n
-	if err != nil {
-		return err
-	}
+	ctxLen := b[2:4]
 	//
-	ctxLen := make([]byte, 2)
-	n, err = buf.Read(ctxLen)
-	read += n
-	if err != nil {
-		return err
-	}
+	ctx := b[4 : 4+binary.LittleEndian.Uint16(ctxLen)]
 	//
-	ctx := make([]byte, binary.LittleEndian.Uint16(ctxLen))
-	n, err = buf.Read(ctx)
-	read += n
-	if err != nil {
-		return err
-	}
-	//
-	data := make([]byte, len(b)-read)
-	_, err = buf.Read(data)
-	if err != nil && err != io.EOF {
-		return err
-	}
+	data := b[4+binary.LittleEndian.Uint16(ctxLen):]
+
 	//
 	p.Method = uint8(method[0])
 	p.Context = ctx
@@ -430,6 +365,9 @@ func ID(p Packet) uint16 {
 //
 func Method(p Packet) uint8 {
 	if v, ok := p.(*PacketRequest); ok {
+		return v.Method
+	}
+	if v, ok := p.(*PacketEvent); ok {
 		return v.Method
 	}
 	return 0
