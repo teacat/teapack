@@ -11,9 +11,6 @@ TeaPack 是基於位元組資料與 [vmihailenco/msgpack](https://github.com/vmi
 因為 TeaPack 的部份資料是單純的位元組標記，因此會比起 JSON 或 MsgPack 在編譯時還要節省部份的字串與轉譯處理時間。
 
 ```
-goos: windows
-goarch: amd64
-pkg: github.com/my/repo
 BenchmarkTeaPackUnmarshal-12        	 1213075	      1002 ns/op	     920 B/op	      16 allocs/op
 BenchmarkTeaPackUnmarshalData-12    	 1786981	       673 ns/op	     690 B/op	      11 allocs/op
 BenchmarkJSONUnmarshal-12           	  630126	      2022 ns/op	     992 B/op	      17 allocs/op
@@ -22,8 +19,16 @@ BenchmarkMsgpackUnmarshal-12        	  704853	      1778 ns/op	    1016 B/op	   
 BenchmarkTeaPackMarshal-12          	 1423786	       848 ns/op	     448 B/op	       9 allocs/op
 BenchmarkJSONMarshal-12             	  921212	      1363 ns/op	     560 B/op	      13 allocs/op
 BenchmarkMsgpackMarshal-12          	  986062	      1198 ns/op	     224 B/op	       5 allocs/op
-PASS
-ok  	github.com/my/repo	11.363s
+```
+
+測試資料位元組長度（注意：不同資料將會有不同的壓縮比率而導致差距更小）：
+
+```
+{"Method":12,"ID":12345,"Context":{"foo":"bar"},"Data":{"hello":"world"}}
+
+TeaPack: 28 Bytes
+MsgPack: 51 Bytes
+JSON   : 73 Bytes
 ```
 
 # 索引
