@@ -115,8 +115,6 @@ func (p *PacketRequest) marshal() (b []byte, err error) {
 
 func (p *PacketRequest) load(b []byte) (err error) {
 	//
-	//b = b[1:]
-	//
 	id := b[1:3]
 	//
 	ctxLen := b[3:5]
