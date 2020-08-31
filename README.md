@@ -4,9 +4,11 @@
 
 # 這是什麼？
 
-TeaPack 是基於位元組資料與 [vmihailenco/msgpack](https://github.com/vmihailenco/msgpack)（亦為 MsgPack）所實作的一個資料封包格式。
+TeaPack 是基於位元組資料與 [vmihailenco/msgpack](https://github.com/vmihailenco/msgpack)（亦為 MsgPack）所實作的一個資料封包格式。更多相關的實作方式請參閱 [rfc/packet.md](./rfc/packet.md) 規範文件。
 
 # 效能比較
+
+因為 TeaPack 的部份資料是單純的位元組標記，因此會比起 JSON 或 MsgPack 在編譯時還要節省部份的字串與轉譯處理時間。
 
 ```
 goos: windows
@@ -60,13 +62,13 @@ $ go get github.com/teacat/teapack
 
 ```go
 var (
-    createUser uint8 = iota
-    updateUser
-    deleteUser
+	createUser uint8 = iota
+	updateUser uint8
+	deleteUser uint8
 )
 
 func main() {
-    b, err := teapack.Marshal(&PacketRequest{
+	b, err := teapack.Marshal(&PacketRequest{
 		Method: createUser,
 		ID:     1,
 		Context: map[string]int64{
@@ -76,9 +78,9 @@ func main() {
 			"hello": "world",
 		},
 	})
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -93,9 +95,9 @@ func main() {
 
 ```go
 func main() {
-    b, err := teapack.Marshal(&PacketRequest{
+	b, err := teapack.Marshal(&PacketRequest{
 		StatusCode: teapack.StatusCodeOK,
-		ID:     1,
+		ID:         1,
 		Context: map[string]int64{
 			"timestamp": time.Now().Unix(),
 		},
@@ -103,9 +105,9 @@ func main() {
 			"hello": "world",
 		},
 	})
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -119,12 +121,12 @@ func main() {
 
 ```go
 var (
-    newMessage uint8 = iota
-    newEmail
+	newMessage uint8 = iota
+	newEmail   uint8
 )
 
 func main() {
-    b, err := teapack.Marshal(&PacketEvent{
+	b, err := teapack.Marshal(&PacketEvent{
 		Method: newMessage,
 		Context: map[string]int64{
 			"timestamp": time.Now().Unix(),
@@ -133,9 +135,9 @@ func main() {
 			"hello": "world",
 		},
 	})
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -143,24 +145,24 @@ func main() {
 
 透過 `Load` 從位元組陣列中載入封包資料，並且再透過 `Unmarshal` 等函式來將資料酬載映射到本機變數。
 
-```
+```go
 func main() {
-    // 編譯資料成為位元組陣列。
-    b, err := teapack.Marshal(&PacketEvent{ ... })
-    if err != nil {
-        panic(err)
-    }
-    // 從位元組陣列載入 TeaPack 資料。
-    p, err := teapack.Load(b)
-    if err != nil {
-        panic(err)
-    }
-    // 將 TeaPack 封包裡的資料酬載映射到本機的變數。
-    var data map[string]interface{}
-    err = teapack.Unmarshal(p, &data)
-    if err != nil {
-        panic(err)
-    }
+	// 編譯資料成為位元組陣列。
+	b, err := teapack.Marshal(&PacketEvent{})
+	if err != nil {
+		panic(err)
+	}
+	// 從位元組陣列載入 TeaPack 資料。
+	p, err := teapack.Load(b)
+	if err != nil {
+		panic(err)
+	}
+	// 將 TeaPack 封包裡的資料酬載映射到本機的變數。
+	var data map[string]interface{}
+	err = teapack.Unmarshal(p, &data)
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -168,20 +170,20 @@ func main() {
 
 透過 `ID`、`Method` 或 `Status` 等函式可以取得請求或回應封包裡的對應編號。前提是：封包必須要先透過 `Load` 進行解析載入。
 
-```
+```go
 func main() {
-    // 編譯資料成為位元組陣列。
-    b, err := teapack.Marshal(&PacketEvent{ ... })
-    if err != nil {
-        panic(err)
-    }
-    // 從位元組陣列載入 TeaPack 資料。
-    p, err := teapack.Load(b)
-    if err != nil {
-        panic(err)
-    }
-    // 取得此封包的目標函式編號。
-    fmt.Println(teapack.Method(p))
+	// 編譯資料成為位元組陣列。
+	b, err := teapack.Marshal(&PacketEvent{})
+	if err != nil {
+		panic(err)
+	}
+	// 從位元組陣列載入 TeaPack 資料。
+	p, err := teapack.Load(b)
+	if err != nil {
+		panic(err)
+	}
+	// 取得此封包的目標函式編號。
+	fmt.Println(teapack.Method(p))
 }
 ```
 
@@ -189,15 +191,15 @@ func main() {
 
 透過 `Type` 來窺探位元組陣列為何種 TeaPack 封包種類。
 
-```
+```go
 func main() {
-    // 編譯資料成為位元組陣列。
-    b, err := teapack.Marshal(&PacketEvent{ ... })
-    if err != nil {
-        panic(err)
-    }
-    // 透過資料標頭檢視這個位元組陣列是什麼封包。
-    fmt.Println(teapack.Type(b)) // 輸出：3（即為 teapack.PacketTypeEvent）
+	// 編譯資料成為位元組陣列。
+	b, err := teapack.Marshal(&PacketEvent{})
+	if err != nil {
+		panic(err)
+	}
+	// 透過資料標頭檢視這個位元組陣列是什麼封包。
+	fmt.Println(teapack.Type(b)) // 輸出：3（即為 teapack.PacketTypeEvent）
 }
 ```
 
