@@ -370,8 +370,10 @@ type Packet interface {
 }
 
 var (
+	// ErrUnknownType 表示這個封包格式錯誤。
 	ErrUnknownType = errors.New("teapack: 未知的封包種類")
-	ErrNotLoaded   = errors.New("teapack: `Unmarshal` 只能用在已經 `Load` 的封包")
+	// ErrNotLoaded 表示正在解析一個尚未編譯的封包。
+	ErrNotLoaded = errors.New("teapack: `Unmarshal` 只能用在已經 `Load` 的封包")
 )
 
 // Type 能夠在解析之前刺探封包的種類為何。
@@ -409,8 +411,28 @@ func Load(data []byte) (p Packet, err error) {
 	return p, nil
 }
 
+//
 func Marshal(p Packet) (b []byte, err error) {
 	return p.marshal()
+}
+
+//
+func ID(p Packet) uint16 {
+	if v, ok := p.(*PacketResponse); ok {
+		return v.ID
+	}
+	if v, ok := p.(*PacketRequest); ok {
+		return v.ID
+	}
+	return 0
+}
+
+//
+func Method(p Packet) uint8 {
+	if v, ok := p.(*PacketRequest); ok {
+		return v.Method
+	}
+	return 0
 }
 
 //
