@@ -1,10 +1,7 @@
 package teapack
 
 import (
-	"encoding/binary"
 	"errors"
-
-	"github.com/vmihailenco/msgpack"
 )
 
 const (
@@ -58,18 +55,7 @@ const (
 	StatusCodeDead StatusCode = 61
 )
 
-// PacketRequest 是一個請求封包。
-type PacketRequest struct {
-	// Method 是欲呼叫的方法名稱。
-	Method uint8
-	// ID 是封包工作編號，回應時會以相同編號回傳。
-	ID uint16
-	// Context 是中繼資料。
-	Context interface{}
-	// Data 是主要資料。
-	Data interface{}
-}
-
+// concatCopyPreAllocate 會以更有效率的方式結合位元組切片。
 // https://stackoverflow.com/questions/37884361/concat-multiple-slices-in-golang
 func concatCopyPreAllocate(slices [][]byte) []byte {
 	var totalLen int
@@ -82,209 +68,6 @@ func concatCopyPreAllocate(slices [][]byte) []byte {
 		i += copy(tmp[i:], s)
 	}
 	return tmp
-}
-
-// Marshal 能夠將封包編譯成位元組資料。
-func (p *PacketRequest) marshal() (b []byte, err error) {
-	ctx, err := msgpack.Marshal(p.Context)
-	if err != nil {
-		return []byte{}, err
-	}
-	data, err := msgpack.Marshal(p.Data)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	//
-	typ := []byte{uint8(PacketTypeRequest)}
-	//
-	id := make([]byte, 2)
-	binary.LittleEndian.PutUint16(id, p.ID)
-	//
-	ctxLen := make([]byte, 2)
-	binary.LittleEndian.PutUint16(ctxLen, uint16(len(ctx)))
-	//
-	method := []byte{p.Method}
-
-	b = concatCopyPreAllocate([][]byte{
-		typ, id, ctxLen, method, ctx, data,
-	})
-
-	return b, nil
-}
-
-func (p *PacketRequest) load(b []byte) (err error) {
-	//
-	id := b[1:3]
-	//
-	ctxLen := b[3:5]
-	//
-	method := b[5:6]
-	//
-	ctx := b[6 : 6+binary.LittleEndian.Uint16(ctxLen)]
-	//
-	data := b[6+binary.LittleEndian.Uint16(ctxLen):]
-	//
-	p.ID = binary.LittleEndian.Uint16(id)
-	p.Method = uint8(method[0])
-	p.Context = ctx
-	p.Data = data
-	return nil
-}
-
-func (p *PacketRequest) unmarshal(v interface{}) (err error) {
-	if data, ok := p.Data.([]byte); ok {
-		return msgpack.Unmarshal(data, v)
-	}
-	return ErrNotLoaded
-}
-
-func (p *PacketRequest) unmarshalContext(v interface{}) (err error) {
-	if data, ok := p.Context.([]byte); ok {
-		return msgpack.Unmarshal(data, v)
-	}
-	return ErrNotLoaded
-}
-
-// PacketResponse 是一個回應封包。
-type PacketResponse struct {
-	// ID 是封包工作編號。
-	ID uint16
-	// StatusCode 是狀態代碼。
-	StatusCode StatusCode
-	// Context 是中繼資料。
-	Context interface{}
-	// Data 是主要資料。
-	Data interface{}
-}
-
-// Marshal 能夠將封包編譯成位元組資料。
-func (p *PacketResponse) marshal() (b []byte, err error) {
-	ctx, err := msgpack.Marshal(p.Context)
-	if err != nil {
-		return []byte{}, err
-	}
-	data, err := msgpack.Marshal(p.Data)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	//
-	typ := []byte{uint8(PacketTypeResponse)}
-	//
-	id := make([]byte, 2)
-	binary.LittleEndian.PutUint16(id, p.ID)
-	//
-	ctxLen := make([]byte, 2)
-	binary.LittleEndian.PutUint16(ctxLen, uint16(len(ctx)))
-	//
-	status := []byte{uint8(p.StatusCode)}
-
-	b = concatCopyPreAllocate([][]byte{
-		typ, id, ctxLen, status, ctx, data,
-	})
-
-	return b, nil
-}
-
-func (p *PacketResponse) load(b []byte) (err error) {
-	//
-	id := b[1:3]
-	//
-	ctxLen := b[3:5]
-	//
-	status := b[5:6]
-	//
-	ctx := b[6 : 6+binary.LittleEndian.Uint16(ctxLen)]
-	//
-	data := b[6+binary.LittleEndian.Uint16(ctxLen):]
-	//
-	p.ID = binary.LittleEndian.Uint16(id)
-	p.StatusCode = StatusCode(status[0])
-	p.Context = ctx
-	p.Data = data
-	return nil
-}
-
-func (p *PacketResponse) unmarshal(v interface{}) (err error) {
-	if data, ok := p.Data.([]byte); ok {
-		return msgpack.Unmarshal(data, v)
-	}
-	return ErrNotLoaded
-}
-
-func (p *PacketResponse) unmarshalContext(v interface{}) (err error) {
-	if data, ok := p.Context.([]byte); ok {
-		return msgpack.Unmarshal(data, v)
-	}
-	return ErrNotLoaded
-}
-
-// PacketEvent 是一個事件封包。
-type PacketEvent struct {
-	// Method 是欲呼叫的方法名稱。
-	Method uint8
-	// Context 是中繼資料。
-	Context interface{}
-	// Data 是主要資料。
-	Data interface{}
-}
-
-// Marshal 能夠將封包編譯成位元組資料。
-func (p *PacketEvent) marshal() (b []byte, err error) {
-	ctx, err := msgpack.Marshal(p.Context)
-	if err != nil {
-		return []byte{}, err
-	}
-	data, err := msgpack.Marshal(p.Data)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	//
-	typ := []byte{uint8(PacketTypeEvent)}
-	//
-	method := []byte{p.Method}
-	//
-	ctxLen := make([]byte, 2)
-	binary.LittleEndian.PutUint16(ctxLen, uint16(len(ctx)))
-
-	b = concatCopyPreAllocate([][]byte{
-		typ, method, ctxLen, ctx, data,
-	})
-
-	return b, nil
-}
-
-func (p *PacketEvent) load(b []byte) (err error) {
-	//
-	method := b[1:2]
-	//
-	ctxLen := b[2:4]
-	//
-	ctx := b[4 : 4+binary.LittleEndian.Uint16(ctxLen)]
-	//
-	data := b[4+binary.LittleEndian.Uint16(ctxLen):]
-
-	//
-	p.Method = uint8(method[0])
-	p.Context = ctx
-	p.Data = data
-	return nil
-}
-
-func (p *PacketEvent) unmarshal(v interface{}) (err error) {
-	if data, ok := p.Data.([]byte); ok {
-		return msgpack.Unmarshal(data, v)
-	}
-	return ErrNotLoaded
-}
-
-func (p *PacketEvent) unmarshalContext(v interface{}) (err error) {
-	if data, ok := p.Context.([]byte); ok {
-		return msgpack.Unmarshal(data, v)
-	}
-	return ErrNotLoaded
 }
 
 // Packet 定義了一個可以編譯的封包。
@@ -319,7 +102,7 @@ func Type(data []byte) PacketType {
 	}
 }
 
-// Load 能夠解析封包。
+// Load 能夠解析封包，在映射或是讀取一個封包之前都必須先解析。
 func Load(data []byte) (p Packet, err error) {
 	switch Type(data) {
 	case PacketTypeRequest:
@@ -337,12 +120,12 @@ func Load(data []byte) (p Packet, err error) {
 	return p, nil
 }
 
-//
+// Marshal 能夠將一個封包編譯成位元組陣列格式。
 func Marshal(p Packet) (b []byte, err error) {
 	return p.marshal()
 }
 
-//
+// ID 能夠取得已經解析資料的封包工作編號。
 func ID(p Packet) uint16 {
 	if v, ok := p.(*PacketResponse); ok {
 		return v.ID
@@ -353,7 +136,7 @@ func ID(p Packet) uint16 {
 	return 0
 }
 
-//
+// Method 能夠取得已經解析資料的封包目標方法代碼。
 func Method(p Packet) uint8 {
 	if v, ok := p.(*PacketRequest); ok {
 		return v.Method
@@ -364,7 +147,7 @@ func Method(p Packet) uint8 {
 	return 0
 }
 
-//
+// Status 能夠取得已經解析資料的封包狀態代碼。
 func Status(p Packet) (status StatusCode) {
 	if v, ok := p.(*PacketResponse); ok {
 		return v.StatusCode
@@ -372,12 +155,12 @@ func Status(p Packet) (status StatusCode) {
 	return StatusCodeOK
 }
 
-//
+// Unmarshal 能夠將已經解析資料的封包酬載映射到本地的資料。
 func Unmarshal(p Packet, v interface{}) (err error) {
 	return p.unmarshal(v)
 }
 
-//
+// UnmarshalContext 能夠將已經解析資料的封包上下文映射到本地的資料。
 func UnmarshalContext(p Packet, v interface{}) (err error) {
 	return p.unmarshalContext(v)
 }
