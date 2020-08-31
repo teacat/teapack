@@ -70,6 +70,20 @@ type PacketRequest struct {
 	Data interface{}
 }
 
+// https://stackoverflow.com/questions/37884361/concat-multiple-slices-in-golang
+func concatCopyPreAllocate(slices [][]byte) []byte {
+	var totalLen int
+	for _, s := range slices {
+		totalLen += len(s)
+	}
+	tmp := make([]byte, totalLen)
+	var i int
+	for _, s := range slices {
+		i += copy(tmp[i:], s)
+	}
+	return tmp
+}
+
 // Marshal 能夠將封包編譯成位元組資料。
 func (p *PacketRequest) marshal() (b []byte, err error) {
 	ctx, err := msgpack.Marshal(p.Context)
@@ -83,22 +97,18 @@ func (p *PacketRequest) marshal() (b []byte, err error) {
 
 	//
 	typ := []byte{uint8(PacketTypeRequest)}
-	b = append(b, typ...)
 	//
 	id := make([]byte, 2)
 	binary.LittleEndian.PutUint16(id, p.ID)
-	b = append(b, id...)
 	//
 	ctxLen := make([]byte, 2)
 	binary.LittleEndian.PutUint16(ctxLen, uint16(len(ctx)))
-	b = append(b, ctxLen...)
 	//
 	method := []byte{p.Method}
-	b = append(b, method...)
-	//
-	b = append(b, ctx...)
-	//
-	b = append(b, data...)
+
+	b = concatCopyPreAllocate([][]byte{
+		typ, id, ctxLen, method, ctx, data,
+	})
 
 	return b, nil
 }
@@ -163,22 +173,18 @@ func (p *PacketResponse) marshal() (b []byte, err error) {
 
 	//
 	typ := []byte{uint8(PacketTypeResponse)}
-	b = append(b, typ...)
 	//
 	id := make([]byte, 2)
 	binary.LittleEndian.PutUint16(id, p.ID)
-	b = append(b, id...)
 	//
 	ctxLen := make([]byte, 2)
 	binary.LittleEndian.PutUint16(ctxLen, uint16(len(ctx)))
-	b = append(b, ctxLen...)
 	//
 	status := []byte{uint8(p.StatusCode)}
-	b = append(b, status...)
-	//
-	b = append(b, ctx...)
-	//
-	b = append(b, data...)
+
+	b = concatCopyPreAllocate([][]byte{
+		typ, id, ctxLen, status, ctx, data,
+	})
 
 	return b, nil
 }
@@ -239,18 +245,15 @@ func (p *PacketEvent) marshal() (b []byte, err error) {
 
 	//
 	typ := []byte{uint8(PacketTypeEvent)}
-	b = append(b, typ...)
 	//
 	method := []byte{p.Method}
-	b = append(b, method...)
 	//
 	ctxLen := make([]byte, 2)
 	binary.LittleEndian.PutUint16(ctxLen, uint16(len(ctx)))
-	b = append(b, ctxLen...)
-	//
-	b = append(b, ctx...)
-	//
-	b = append(b, data...)
+
+	b = concatCopyPreAllocate([][]byte{
+		typ, method, ctxLen, ctx, data,
+	})
 
 	return b, nil
 }
