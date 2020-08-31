@@ -68,8 +68,6 @@ type PacketRequest struct {
 	Context interface{}
 	// Data 是主要資料。
 	Data interface{}
-
-	binary []byte
 }
 
 // Marshal 能夠將封包編譯成位元組資料。
@@ -106,7 +104,6 @@ func (p *PacketRequest) marshal() (b []byte, err error) {
 }
 
 func (p *PacketRequest) load(b []byte) (err error) {
-	p.binary = b
 	//
 	//b = b[1:]
 	//
@@ -151,8 +148,6 @@ type PacketResponse struct {
 	Context interface{}
 	// Data 是主要資料。
 	Data interface{}
-
-	binary []byte
 }
 
 // Marshal 能夠將封包編譯成位元組資料。
@@ -189,7 +184,6 @@ func (p *PacketResponse) marshal() (b []byte, err error) {
 }
 
 func (p *PacketResponse) load(b []byte) (err error) {
-	p.binary = b
 	//
 	id := b[1:3]
 	//
@@ -230,8 +224,6 @@ type PacketEvent struct {
 	Context interface{}
 	// Data 是主要資料。
 	Data interface{}
-
-	binary []byte
 }
 
 // Marshal 能夠將封包編譯成位元組資料。
@@ -264,8 +256,6 @@ func (p *PacketEvent) marshal() (b []byte, err error) {
 }
 
 func (p *PacketEvent) load(b []byte) (err error) {
-	p.binary = b
-
 	//
 	method := b[1:2]
 	//
