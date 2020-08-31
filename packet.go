@@ -8,7 +8,7 @@ import (
 
 // PacketRequest 是一個請求封包。
 type PacketRequest struct {
-	// Method 是欲呼叫的方法名稱。
+	// Method 是欲呼叫的函式名稱。
 	Method uint8
 	// ID 是封包工作編號，回應時會以相同編號回傳。
 	ID uint16
@@ -144,7 +144,7 @@ func (p *PacketResponse) unmarshalContext(v interface{}) (err error) {
 
 // PacketEvent 是一個事件封包。
 type PacketEvent struct {
-	// Method 是欲呼叫的方法名稱。
+	// Method 是欲呼叫的函式名稱。
 	Method uint8
 	// Context 是中繼資料。
 	Context interface{}

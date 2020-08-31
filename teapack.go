@@ -136,7 +136,7 @@ func ID(p Packet) uint16 {
 	return 0
 }
 
-// Method 能夠取得已經解析資料的封包目標方法代碼。
+// Method 能夠取得已經解析資料的封包目標函式代碼。
 func Method(p Packet) uint8 {
 	if v, ok := p.(*PacketRequest); ok {
 		return v.Method
