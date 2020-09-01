@@ -45,9 +45,18 @@ func (p *PacketRequest) marshal() (b []byte, err error) {
 
 // load 會從位元組資料中解析資料並且轉換成一個封包。
 func (p *PacketRequest) load(b []byte) (err error) {
+	if len(b) < 6 {
+		return ErrTooShort
+	}
+
 	id := b[1:3]
 	ctxLen := b[3:5]
 	method := b[5:6]
+
+	if int(6+binary.LittleEndian.Uint16(ctxLen)) > len(b) {
+		return ErrIncorrectRange
+	}
+
 	ctx := b[6 : 6+binary.LittleEndian.Uint16(ctxLen)]
 	data := b[6+binary.LittleEndian.Uint16(ctxLen):]
 
@@ -113,9 +122,18 @@ func (p *PacketResponse) marshal() (b []byte, err error) {
 
 // load 會從位元組資料中解析資料並且轉換成一個封包。
 func (p *PacketResponse) load(b []byte) (err error) {
+	if len(b) < 6 {
+		return ErrTooShort
+	}
+
 	id := b[1:3]
 	ctxLen := b[3:5]
 	status := b[5:6]
+
+	if int(6+binary.LittleEndian.Uint16(ctxLen)) > len(b) {
+		return ErrIncorrectRange
+	}
+
 	ctx := b[6 : 6+binary.LittleEndian.Uint16(ctxLen)]
 	data := b[6+binary.LittleEndian.Uint16(ctxLen):]
 
@@ -177,8 +195,17 @@ func (p *PacketEvent) marshal() (b []byte, err error) {
 
 // load 會從位元組資料中解析資料並且轉換成一個封包。
 func (p *PacketEvent) load(b []byte) (err error) {
+	if len(b) < 4 {
+		return ErrTooShort
+	}
+
 	method := b[1:2]
 	ctxLen := b[2:4]
+
+	if int(6+binary.LittleEndian.Uint16(ctxLen)) > len(b) {
+		return ErrIncorrectRange
+	}
+
 	ctx := b[4 : 4+binary.LittleEndian.Uint16(ctxLen)]
 	data := b[4+binary.LittleEndian.Uint16(ctxLen):]
 

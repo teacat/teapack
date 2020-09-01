@@ -4,6 +4,17 @@ import (
 	"errors"
 )
 
+var (
+	// ErrUnknownType 表示封包格式錯誤。
+	ErrUnknownType = errors.New("teapack: 未知的封包種類")
+	// ErrNotLoaded 表示正在解析尚未編譯的封包。
+	ErrNotLoaded = errors.New("teapack: `Unmarshal` 只能用在已經 `Load` 的封包")
+	// ErrTooShort 表示封包的長度不正確而無法解析。
+	ErrTooShort = errors.New("teapack: 不正確的封包長度。")
+	// ErrIncorrectRange 表示封包裡要求的範圍遠超出封包本身的長度，可能資料不正確或被截斷了。
+	ErrIncorrectRange = errors.New("teapack: 封包內的資料指示範圍已經超出資料長度。")
+)
+
 const (
 	// PacketTypeUnknown 是未知的種類。
 	PacketTypeUnknown PacketType = iota
@@ -77,13 +88,6 @@ type Packet interface {
 	unmarshalContext(v interface{}) (err error)
 	load(b []byte) (err error)
 }
-
-var (
-	// ErrUnknownType 表示這個封包格式錯誤。
-	ErrUnknownType = errors.New("teapack: 未知的封包種類")
-	// ErrNotLoaded 表示正在解析一個尚未編譯的封包。
-	ErrNotLoaded = errors.New("teapack: `Unmarshal` 只能用在已經 `Load` 的封包")
-)
 
 // Type 能夠在解析之前刺探封包的種類為何。
 func Type(data []byte) PacketType {
