@@ -90,3 +90,16 @@ func TestPacketResponse(t *testing.T) {
 	a.Equal(StatusCodeOK, Status(req))
 	a.Equal(uint16(12345), ID(p))
 }
+
+func TestPacketError(t *testing.T) {
+	a := assert.New(t)
+
+	_, err := Load([]byte{})
+	a.Equal(ErrUnknownType, err)
+
+	_, err = Load([]byte{1})
+	a.Equal(ErrTooShort, err)
+
+	_, err = Load([]byte{1, 2, 3, 4, 5, 6})
+	a.Equal(ErrIncorrectRange, err)
+}
