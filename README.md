@@ -73,7 +73,7 @@ var (
 )
 
 func main() {
-	b, err := teapack.Marshal(&PacketRequest{
+	b, _ := teapack.Marshal(&PacketRequest{
 		Method: createUser,
 		ID:     1,
 		Context: map[string]int64{
@@ -83,9 +83,6 @@ func main() {
 			"hello": "world",
 		},
 	})
-	if err != nil {
-		panic(err)
-	}
 }
 ```
 
@@ -100,7 +97,7 @@ func main() {
 
 ```go
 func main() {
-	b, err := teapack.Marshal(&PacketRequest{
+	b, _ := teapack.Marshal(&PacketRequest{
 		StatusCode: teapack.StatusCodeOK,
 		ID:         1,
 		Context: map[string]int64{
@@ -110,9 +107,6 @@ func main() {
 			"hello": "world",
 		},
 	})
-	if err != nil {
-		panic(err)
-	}
 }
 ```
 
@@ -131,7 +125,7 @@ var (
 )
 
 func main() {
-	b, err := teapack.Marshal(&PacketEvent{
+	b, _ := teapack.Marshal(&PacketEvent{
 		Method: newMessage,
 		Context: map[string]int64{
 			"timestamp": time.Now().Unix(),
@@ -140,9 +134,6 @@ func main() {
 			"hello": "world",
 		},
 	})
-	if err != nil {
-		panic(err)
-	}
 }
 ```
 
@@ -153,21 +144,12 @@ func main() {
 ```go
 func main() {
 	// 編譯資料成為位元組陣列。
-	b, err := teapack.Marshal(&PacketEvent{})
-	if err != nil {
-		panic(err)
-	}
+	b, _ := teapack.Marshal(&PacketEvent{})
 	// 從位元組陣列載入 TeaPack 資料。
-	p, err := teapack.Load(b)
-	if err != nil {
-		panic(err)
-	}
+	p, _ := teapack.Load(b)
 	// 將 TeaPack 封包裡的資料酬載映射到本機的變數。
 	var data map[string]interface{}
-	err = teapack.Unmarshal(p, &data)
-	if err != nil {
-		panic(err)
-	}
+	teapack.Unmarshal(p, &data)
 }
 ```
 
@@ -178,15 +160,9 @@ func main() {
 ```go
 func main() {
 	// 編譯資料成為位元組陣列。
-	b, err := teapack.Marshal(&PacketEvent{})
-	if err != nil {
-		panic(err)
-	}
+	b, _ := teapack.Marshal(&PacketEvent{})
 	// 從位元組陣列載入 TeaPack 資料。
-	p, err := teapack.Load(b)
-	if err != nil {
-		panic(err)
-	}
+	p, _ := teapack.Load(b)
 	// 取得此封包的目標函式編號。
 	fmt.Println(teapack.Method(p))
 }
@@ -199,10 +175,7 @@ func main() {
 ```go
 func main() {
 	// 編譯資料成為位元組陣列。
-	b, err := teapack.Marshal(&PacketEvent{})
-	if err != nil {
-		panic(err)
-	}
+	b, _ := teapack.Marshal(&PacketEvent{})
 	// 透過資料標頭檢視這個位元組陣列是什麼封包。
 	fmt.Println(teapack.Type(b)) // 輸出：3（即為 teapack.PacketTypeEvent）
 }
